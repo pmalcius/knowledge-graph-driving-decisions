@@ -1,0 +1,4 @@
+rdflib
+owlready2
+jsonschema
+pytest
