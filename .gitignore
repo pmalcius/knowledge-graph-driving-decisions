@@ -36,6 +36,7 @@ htmlcov/
 ontology/*.bak
 ontology/*.tmp
 ontology/*.rdf~
+ontology/*.ttl
 
 # --- Misc ---
 *.egg-info/
