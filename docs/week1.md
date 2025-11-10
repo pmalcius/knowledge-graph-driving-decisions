@@ -16,7 +16,7 @@ python3 src/decide.py scenes/legal_outside_window.json
 
 ## Check-in
 
-Hours worked: 5 hours
+Hours worked: 6 hours
 
 Progress:
 
