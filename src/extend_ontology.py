@@ -67,6 +67,23 @@ g.add((drop_window, RDF.type, TRAFFIC.TimeWindow))
 g.add((drop_window, TRAFFIC.startsAtTime, Literal("07:30:00", datatype=XSD.time)))
 g.add((drop_window, TRAFFIC.endsAtTime,   Literal("09:00:00", datatype=XSD.time)))
 
+# Additional Week 2 individuals
+
+# Generic crosswalk zone
+crosswalk_zone = TRAFFIC.CrosswalkZone
+g.add((crosswalk_zone, RDF.type, TRAFFIC.Zone))
+g.add((crosswalk_zone, RDFS.label, Literal("Crosswalk Zone")))
+
+# Stop sign and yield sign as specific traffic:Sign individuals
+stop_sign = TRAFFIC.StopSign
+g.add((stop_sign, RDF.type, TRAFFIC.Sign))
+g.add((stop_sign, RDFS.label, Literal("Stop Sign")))
+
+yield_sign = TRAFFIC.YieldSign
+g.add((yield_sign, RDF.type, TRAFFIC.Sign))
+g.add((yield_sign, RDFS.label, Literal("Yield Sign")))
+
+
 # Example rule: prohibit RightOnRed in School Zone during drop-off if sign present
 rule = TRAFFIC.Rule_NoTurnOnRed_SchoolDrop
 g.add((rule, RDF.type, TRAFFIC.TrafficRule))
@@ -76,6 +93,22 @@ g.add((rule, TRAFFIC.requiresSign,  no_turn_on_red_sign))
 g.add((rule, TRAFFIC.prohibitsAction, right_on_red))
 g.add((rule, RDFS.comment, Literal(
     "No Right on Red in School Zone during 07:30-09:00 when 'No Turn on Red' sign is present."
+)))
+
+# Placeholder rule: Yield to pedestrians at crosswalk
+yield_rule = TRAFFIC.Rule_YieldAtCrosswalk
+g.add((yield_rule, RDF.type, TRAFFIC.TrafficRule))
+g.add((yield_rule, TRAFFIC.appliesInZone, crosswalk_zone))
+g.add((yield_rule, RDFS.comment, Literal(
+    "Placeholder: vehicles must yield to pedestrians when in a Crosswalk Zone."
+)))
+
+# Placeholder rule: Stop at stop sign before proceeding
+stop_rule = TRAFFIC.Rule_StopAtStopSign
+g.add((stop_rule, RDF.type, TRAFFIC.TrafficRule))
+g.add((stop_rule, TRAFFIC.requiresSign, stop_sign))
+g.add((stop_rule, RDFS.comment, Literal(
+    "Placeholder: vehicles must come to a complete stop at a Stop Sign before proceeding."
 )))
 
 # Serialize your extension
