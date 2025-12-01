@@ -1,0 +1,8 @@
+{
+  "zone": "crosswalk_zone",
+  "time": "14:30",
+  "signs": [],
+  "action": "right_on_red",
+  "pedestrians_present": true,
+  "speed": 10
+}

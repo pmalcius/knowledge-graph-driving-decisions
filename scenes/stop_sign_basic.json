@@ -1,0 +1,8 @@
+{
+  "zone": "school_zone",
+  "time": "11:00",
+  "signs": ["stop_sign"],
+  "action": "right_on_red",
+  "pedestrians_present": false,
+  "speed": 15
+}

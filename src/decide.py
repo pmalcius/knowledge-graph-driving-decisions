@@ -11,7 +11,7 @@ def hhmm_to_minutes(hhmm: str) -> int:
     return int(h)*60 + int(m)
 
 # ================================
-# NEW: Scene Validator
+# Scene Validator
 # ================================
 REQUIRED_KEYS = ["zone", "time", "action"]
 
@@ -44,6 +44,18 @@ def validate_scene(scene: dict):
         if not isinstance(s, str):
             raise TypeError("each sign must be a string")
 
+    # OPTIONAL: pedestrians_present (bool)
+    if "pedestrians_present" in scene:
+        ped = scene["pedestrians_present"]
+        if not isinstance(ped, bool):
+            raise TypeError("pedestrians_present must be a boolean if provided")
+
+    # OPTIONAL: speed (int or float)
+    if "speed" in scene:
+        spd = scene["speed"]
+        if not isinstance(spd, (int, float)):
+            raise TypeError("speed must be a number (int or float) if provided")
+
 # ================================
 # Entry point / arg check
 # ================================
@@ -54,9 +66,7 @@ if len(sys.argv) < 2:
 scene_path = sys.argv[1]
 scene = json.load(open(scene_path))
 
-# ================================
-# NEW: Validate scene before use
-# ================================
+# Validate scene before using it
 try:
     validate_scene(scene)
 except Exception as e:
@@ -70,6 +80,9 @@ zone   = scene["zone"]                  # e.g., "school_zone"
 time_s = scene["time"]                  # e.g., "08:15"
 signs  = scene.get("signs", [])         # e.g., ["no_turn_on_red"]
 action = scene["action"]                # e.g., "right_on_red"
+
+pedestrians_present = scene.get("pedestrians_present", None)
+speed = scene.get("speed", None)
 
 minutes = hhmm_to_minutes(time_s)
 
@@ -85,6 +98,12 @@ facts = [
     f"assertz(current_time({minutes}))",
     f"assertz(intended_action({action}))",
 ] + [f"assertz(present_sign({s}))" for s in signs]
+
+# NEW: optional facts
+if pedestrians_present is True:
+    facts.append("assertz(pedestrians_present)")
+if speed is not None:
+    facts.append(f"assertz(vehicle_speed({speed}))")
 
 goal = ",".join([
     "consult('reasoner/rdf_reasoner.pl')",
