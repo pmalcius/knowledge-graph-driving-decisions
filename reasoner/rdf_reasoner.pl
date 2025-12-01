@@ -8,6 +8,12 @@
 :- rdf_register_prefix(scene,   'http://purl.net/dscene-kg/scene/v02/').
 :- rdf_register_prefix(xsd,     'http://www.w3.org/2001/XMLSchema#').
 
+% Scene-level facts will be asserted at runtime from Python
+:- dynamic in_zone/1.
+:- dynamic present_sign/1.
+:- dynamic current_time/1.
+:- dynamic intended_action/1.
+
 % ----- Load KB (force Turtle) -----
 load_kb :-
     rdf_load('ontology/DSceneKG-Pandaset.ttl', [format(turtle)]),
