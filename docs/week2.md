@@ -2,6 +2,13 @@
 
 ## How to run
 
+This is how you run some of the stuff that we did this week
+
+```{text}
+python3 src/decide.py scenes/illegal_school_right_on_red.json
+python3 src/decide.py scenes/legal_outside_window.json
+```
+
 ## Check-in
 
 Hours worked: 5 hours

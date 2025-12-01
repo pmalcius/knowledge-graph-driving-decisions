@@ -1,5 +1,15 @@
 # Week 3 Check-In
 
+## How to run
+
+Some generic tests for our implementation
+
+```{text}
+python3 src/decide.py scenes/sandbox_generic_1.json   
+python3 src/decide.py scenes/sandbox_generic_2.json
+python3 src/decide.py scenes/sandbox_generic_3.json
+```
+
 ## Check-in
 
 Hours worked: 4 hours
