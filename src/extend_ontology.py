@@ -20,6 +20,7 @@ g.bind("traffic", TRAFFIC)
 # ---- Classes (reuse/subclass where possible) ----
 # Keep your TrafficRule as new; reuse their RoadSign via subclassing
 g.add((TRAFFIC.TrafficRule, RDF.type, RDFS.Class))
+
 g.add((TRAFFIC.Sign, RDF.type, RDFS.Class))
 g.add((TRAFFIC.Sign, RDFS.subClassOf, DRIVING.RoadSign))
 
@@ -34,13 +35,13 @@ def add_obj_prop(p, dom, rng):
     g.add((p, RDFS.domain, dom))
     g.add((p, RDFS.range, rng))
 
-add_obj_prop(TRAFFIC.appliesInZone, TRAFFIC.TrafficRule, TRAFFIC.Zone)
-add_obj_prop(TRAFFIC.appliesDuring, TRAFFIC.TrafficRule, TRAFFIC.TimeWindow)
-add_obj_prop(TRAFFIC.requiresSign,  TRAFFIC.TrafficRule, TRAFFIC.Sign)
-add_obj_prop(TRAFFIC.permitsAction, TRAFFIC.TrafficRule, TRAFFIC.DriverAction)
+add_obj_prop(TRAFFIC.appliesInZone,   TRAFFIC.TrafficRule, TRAFFIC.Zone)
+add_obj_prop(TRAFFIC.appliesDuring,   TRAFFIC.TrafficRule, TRAFFIC.TimeWindow)
+add_obj_prop(TRAFFIC.requiresSign,    TRAFFIC.TrafficRule, TRAFFIC.Sign)
+add_obj_prop(TRAFFIC.permitsAction,   TRAFFIC.TrafficRule, TRAFFIC.DriverAction)
 add_obj_prop(TRAFFIC.prohibitsAction, TRAFFIC.TrafficRule, TRAFFIC.DriverAction)
 
-# ---- Datatype properties for time window (simple, Week-1 friendly) ----
+# ---- Datatype properties for time window ----
 for dp in ("startsAtTime", "endsAtTime"):
     g.add((TRAFFIC[dp], RDF.type, RDF.Property))
     g.add((TRAFFIC[dp], RDFS.domain, TRAFFIC.TimeWindow))
@@ -52,37 +53,10 @@ no_turn_on_red_sign = TRAFFIC.NoTurnOnRed
 g.add((no_turn_on_red_sign, RDF.type, TRAFFIC.Sign))
 g.add((no_turn_on_red_sign, RDFS.label, Literal("No Turn on Red")))
 
-# Zone (keep yours unless you later discover a DSceneKG zone class to reuse)
-school_zone = TRAFFIC.SchoolZone
-g.add((school_zone, RDF.type, TRAFFIC.Zone))
-g.add((school_zone, RDFS.label, Literal("School Zone")))
-
-# Driver action vocabulary
-right_on_red = TRAFFIC.RightOnRed
-g.add((right_on_red, RDF.type, TRAFFIC.DriverAction))
-
-# TimeWindow with explicit start/end times
-drop_window = TRAFFIC.DropOff_0730_0900
-g.add((drop_window, RDF.type, TRAFFIC.TimeWindow))
-g.add((drop_window, TRAFFIC.startsAtTime, Literal("07:30:00", datatype=XSD.time)))
-g.add((drop_window, TRAFFIC.endsAtTime,   Literal("09:00:00", datatype=XSD.time)))
-
-# Additional Week 2 individuals
-
-# Generic crosswalk zone
-crosswalk_zone = TRAFFIC.CrosswalkZone
-g.add((crosswalk_zone, RDF.type, TRAFFIC.Zone))
-g.add((crosswalk_zone, RDFS.label, Literal("Crosswalk Zone")))
-
-# Stop sign and yield sign as specific traffic:Sign individuals
+# Additional signs
 stop_sign = TRAFFIC.StopSign
 g.add((stop_sign, RDF.type, TRAFFIC.Sign))
 g.add((stop_sign, RDFS.label, Literal("Stop Sign")))
-
-# Extra comments for explanation / readability
-g.add((crosswalk_zone, RDFS.comment,
-       Literal("Zone representing a pedestrian crosswalk where vehicles may need to yield.")))
-
 g.add((stop_sign, RDFS.comment,
        Literal("Road sign indicating vehicles must come to a complete stop before proceeding.")))
 
@@ -90,19 +64,58 @@ yield_sign = TRAFFIC.YieldSign
 g.add((yield_sign, RDF.type, TRAFFIC.Sign))
 g.add((yield_sign, RDFS.label, Literal("Yield Sign")))
 
+no_left_turn_sign = TRAFFIC.NoLeftTurn
+g.add((no_left_turn_sign, RDF.type, TRAFFIC.Sign))
+g.add((no_left_turn_sign, RDFS.label, Literal("No Left Turn")))
 
-# Example rule: prohibit RightOnRed in School Zone during drop-off if sign present
-rule = TRAFFIC.Rule_NoTurnOnRed_SchoolDrop
-g.add((rule, RDF.type, TRAFFIC.TrafficRule))
-g.add((rule, TRAFFIC.appliesInZone, school_zone))
-g.add((rule, TRAFFIC.appliesDuring, drop_window))
-g.add((rule, TRAFFIC.requiresSign,  no_turn_on_red_sign))
-g.add((rule, TRAFFIC.prohibitsAction, right_on_red))
-g.add((rule, RDFS.comment, Literal(
+# Zone (keep yours unless you later discover a DSceneKG zone class to reuse)
+school_zone = TRAFFIC.SchoolZone
+g.add((school_zone, RDF.type, TRAFFIC.Zone))
+g.add((school_zone, RDFS.label, Literal("School Zone")))
+
+crosswalk_zone = TRAFFIC.CrosswalkZone
+g.add((crosswalk_zone, RDF.type, TRAFFIC.Zone))
+g.add((crosswalk_zone, RDFS.label, Literal("Crosswalk Zone")))
+g.add((crosswalk_zone, RDFS.comment,
+       Literal("Zone representing a pedestrian crosswalk where vehicles may need to yield.")))
+
+# ---- Driver action vocabulary ----
+right_on_red = TRAFFIC.RightOnRed
+g.add((right_on_red, RDF.type, TRAFFIC.DriverAction))
+g.add((right_on_red, RDFS.label, Literal("Right on Red")))
+
+left_turn = TRAFFIC.LeftTurn
+g.add((left_turn, RDF.type, TRAFFIC.DriverAction))
+g.add((left_turn, RDFS.label, Literal("Left Turn")))
+
+straight_through = TRAFFIC.StraightThrough
+g.add((straight_through, RDF.type, TRAFFIC.DriverAction))
+g.add((straight_through, RDFS.label, Literal("Straight Through")))
+
+uturn = TRAFFIC.UTurn
+g.add((uturn, RDF.type, TRAFFIC.DriverAction))
+g.add((uturn, RDFS.label, Literal("U-Turn")))
+
+# ---- TimeWindow with explicit start/end times ----
+drop_window = TRAFFIC.DropOff_0730_0900
+g.add((drop_window, RDF.type, TRAFFIC.TimeWindow))
+g.add((drop_window, TRAFFIC.startsAtTime, Literal("07:30:00", datatype=XSD.time)))
+g.add((drop_window, TRAFFIC.endsAtTime,   Literal("09:00:00", datatype=XSD.time)))
+
+# ---- Rules ----
+
+# Rule 1: No Right on Red in School Zone during drop-off if sign present
+rule_school_ror = TRAFFIC.Rule_NoTurnOnRed_SchoolDrop
+g.add((rule_school_ror, RDF.type, TRAFFIC.TrafficRule))
+g.add((rule_school_ror, TRAFFIC.appliesInZone, school_zone))
+g.add((rule_school_ror, TRAFFIC.appliesDuring, drop_window))
+g.add((rule_school_ror, TRAFFIC.requiresSign,  no_turn_on_red_sign))
+g.add((rule_school_ror, TRAFFIC.prohibitsAction, right_on_red))
+g.add((rule_school_ror, RDFS.comment, Literal(
     "No Right on Red in School Zone during 07:30-09:00 when 'No Turn on Red' sign is present."
 )))
 
-# Placeholder rule: Yield to pedestrians at crosswalk
+# Rule 2: Placeholder rule: Yield to pedestrians at crosswalk
 yield_rule = TRAFFIC.Rule_YieldAtCrosswalk
 g.add((yield_rule, RDF.type, TRAFFIC.TrafficRule))
 g.add((yield_rule, TRAFFIC.appliesInZone, crosswalk_zone))
@@ -110,12 +123,21 @@ g.add((yield_rule, RDFS.comment, Literal(
     "Placeholder: vehicles must yield to pedestrians when in a Crosswalk Zone."
 )))
 
-# Placeholder rule: Stop at stop sign before proceeding
+# Rule 3: Placeholder rule: Stop at stop sign before proceeding
 stop_rule = TRAFFIC.Rule_StopAtStopSign
 g.add((stop_rule, RDF.type, TRAFFIC.TrafficRule))
 g.add((stop_rule, TRAFFIC.requiresSign, stop_sign))
 g.add((stop_rule, RDFS.comment, Literal(
     "Placeholder: vehicles must come to a complete stop at a Stop Sign before proceeding."
+)))
+
+# Rule 4: No Left Turn wherever a No Left Turn sign is present
+no_left_rule = TRAFFIC.Rule_NoLeftTurn
+g.add((no_left_rule, RDF.type, TRAFFIC.TrafficRule))
+g.add((no_left_rule, TRAFFIC.requiresSign,  no_left_turn_sign))
+g.add((no_left_rule, TRAFFIC.prohibitsAction, left_turn))
+g.add((no_left_rule, RDFS.comment, Literal(
+    "No Left Turn wherever a 'No Left Turn' sign is present."
 )))
 
 # Serialize your extension

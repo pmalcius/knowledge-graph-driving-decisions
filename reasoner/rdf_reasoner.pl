@@ -49,13 +49,15 @@ iri_fragment(Term, FragAtom) :-
 % =======================
 % Fragment → canonical atom maps
 % =======================
-frag_action('RightOnRed',       right_on_red).
+frag_action('RightOnRed', right_on_red).
+frag_action('LeftTurn',   left_turn).
 
-frag_sign('NoTurnOnRed',        no_turn_on_red).
-frag_sign('StopSign',           stop_sign).
+frag_sign('NoTurnOnRed',  no_turn_on_red).
+frag_sign('StopSign',     stop_sign).
+frag_sign('NoLeftTurn',   no_left_turn).
 
-frag_zone('SchoolZone',         school_zone).
-frag_zone('CrosswalkZone',      crosswalk_zone).
+frag_zone('SchoolZone',    school_zone).
+frag_zone('CrosswalkZone', crosswalk_zone).
 
 action_matches(ActionIRI, Canon) :-
     iri_fragment(ActionIRI, Frag),

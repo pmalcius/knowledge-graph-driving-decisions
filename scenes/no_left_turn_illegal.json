@@ -1,0 +1,6 @@
+{
+  "zone": "school_zone",
+  "time": "12:00",
+  "signs": ["no_left_turn"],
+  "action": "left_turn"
+}
