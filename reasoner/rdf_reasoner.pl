@@ -168,12 +168,11 @@ rule_applies(Rule, ActionA, Kind) :-
 % using the TrafficRule individuals defined in the ontology.
 
 % =======================
-% Stop sign rules (scaffolding)
+% Stop sign rules (scaffolding + enforcement)
 % =======================
 % must_stop_before_proceeding/1:
-%   Skeleton predicate that will eventually enforce the requirement
-%   that vehicles come to a complete stop at a Stop Sign before proceeding.
-%   For now, it only checks that a stop-sign rule exists and the StopSign is present.
+%   Skeleton predicate that can be used for future "did the car actually stop?"
+%   reasoning. Right now it just logs when a StopSign rule is relevant.
 stop_sign_rule(Rule) :-
     rdf(Rule, rdf:type, traffic:'TrafficRule'),
     rdf(Rule, traffic:requiresSign, SignIRI),
@@ -186,9 +185,23 @@ must_stop_before_proceeding(ActionA) :-
     % Reuse generic condition checkers for zone/time if attached
     cond_zone_ok(Rule),
     cond_time_ok(Rule),
-    % Placeholder: we just succeed and print a debug message.
+    % Placeholder: just print a debug message.
     format(user_error,
            "[DEBUG] must_stop_before_proceeding scaffold triggered for action ~w, rule ~w~n",
+           [ActionA, Rule]).
+
+% NEW: stop_sign_violation/2
+%   Encodes the idea that if there is a StopSign rule, the StopSign is present,
+%   and the driver is performing some movement (e.g., right_on_red), then we
+%   treat the behavior as illegal unless proven otherwise.
+stop_sign_violation(ActionA, Rule) :-
+    intended_action(ActionA),
+    stop_sign_rule(Rule),
+    present_sign(stop_sign),
+    cond_zone_ok(Rule),
+    cond_time_ok(Rule),
+    format(user_error,
+           "[DEBUG] stop_sign_violation triggered for action ~w, rule ~w~n",
            [ActionA, Rule]).
 
 % =======================
@@ -212,54 +225,133 @@ yield_to_pedestrians(ActionA, Rule) :-
            [ActionA, Rule]).
 
 % =======================
+% Explanation components
+% =======================
+% explain_rule_components(+Rule, -ZoneStatus, -SignStatus, -TimeStatus, -ActionStatus)
+%   Collects a structured view of how a rule matched (or did not match)
+%   the current scene. Used to build richer explanation strings.
+explain_rule_components(Rule, ZoneStatus, SignStatus, TimeStatus, ActionStatus) :-
+    % Zone status
+    ( rdf(Rule, traffic:appliesInZone, ZoneIRI)
+      -> zone_matches(ZoneIRI, ZCanon),
+         ( in_zone(ZCanon)
+           -> ZoneStatus = matches_zone(ZCanon)
+           ;  ZoneStatus = mismatched_zone(ZCanon)
+         )
+      ;  ZoneStatus = no_zone_constraint
+    ),
+    % Sign status
+    ( rdf(Rule, traffic:requiresSign, SignIRI)
+      -> sign_matches(SignIRI, SCanon),
+         ( present_sign(SCanon)
+           -> SignStatus = matches_sign(SCanon)
+           ;  SignStatus = missing_sign(SCanon)
+         )
+      ;  SignStatus = no_sign_constraint
+    ),
+    % Time status
+    ( rdf(Rule, traffic:appliesDuring, TW)
+      -> current_time(Min),
+         ( time_in_window(Min, TW)
+           -> TimeStatus = in_time_window(TW)
+           ;  TimeStatus = outside_time_window(TW)
+         )
+      ;  TimeStatus = no_time_constraint
+    ),
+    % Action status
+    ( rdf(Rule, traffic:prohibitsAction, Airi)
+      -> ( action_matches(Airi, ACanon)
+           -> ActionStatus = prohibits_action(ACanon)
+           ;  ActionStatus = prohibiting_unknown_action(Airi)
+         )
+    ; rdf(Rule, traffic:permitsAction, Airi)
+      -> ( action_matches(Airi, ACanon)
+           -> ActionStatus = permits_action(ACanon)
+           ;  ActionStatus = permitting_unknown_action(Airi)
+         )
+      ;  ActionStatus = no_action_constraint
+    ).
+
+% =======================
 % Decision semantics
 % =======================
+% illegal(+ActionCanonical, -Rule)
+%   Succeeds if either:
+%     * an ontology TrafficRule explicitly prohibits the action, OR
+%     * the local stop_sign_violation rule fires.
 illegal(ActionA, Rule) :-
     intended_action(ActionA),
-    rule_applies(Rule, ActionA, prohibits).
+    ( rule_applies(Rule, ActionA, prohibits)
+    ; stop_sign_violation(ActionA, Rule)
+    ).
 
 legal(ActionA) :-
     intended_action(ActionA),
     \+ illegal(ActionA, _).
 
+% Build human-readable explanations using the structured components
 explain(illegal, Rule, Why) :-
+    explain_rule_components(Rule, ZStatus, SStatus, TStatus, AStatus),
     format(string(Why),
-           "Prohibiting rule applies (~w) under current zone/sign/time.",
-           [Rule]).
+           "Prohibiting rule applies (~w). Action: ~w, Zone: ~w, Sign: ~w, Time: ~w.",
+           [Rule, AStatus, ZStatus, SStatus, TStatus]).
 explain(legal,  _,   "No prohibiting rule applies for this context.").
 
-% Debug: dump rule by rule for a given action
+% =======================
+% Debug: dump rules and scaffold categories
+% =======================
+% dump_rules_for(+ActionCanonical)
+%   Prints a detailed view of each TrafficRule, including whether it
+%   is a generic rule, a stop-sign scaffold, or a crosswalk scaffold.
 dump_rules_for(ActionA) :-
     format(user_error, "~n[DEBUG] Rules for action '~w':~n", [ActionA]),
     forall(
-      ( rdf(R, rdf:type, traffic:'TrafficRule'),
-        ( rdf(R, traffic:prohibitsAction, Airi)
-        ; rdf(R, traffic:permitsAction,   Airi)
-        )
-      ),
+      rdf(R, rdf:type, traffic:'TrafficRule'),
       (
-        ( action_matches(Airi, ActionA) -> Amatch = true ; Amatch = false ),
+        % Action / kind
+        ( rdf(R, traffic:prohibitsAction, Airi)
+          -> AKind = prohibits
+        ; rdf(R, traffic:permitsAction, Airi)
+          -> AKind = permits
+        ; Airi = none,
+          AKind = none
+        ),
+        ( Airi == none
+          -> Amatch = 'n/a'
+          ;  ( action_matches(Airi, ActionA)
+               -> Amatch = true
+               ;  Amatch = false
+             )
+        ),
+        % Zone status
         ( rdf(R, traffic:appliesInZone, Zi)
           -> ( zone_matches(Zi, Z),
                ( in_zone(Z) -> Zok = true ; Zok = false )
              )
           ;  ( Zi = none, Zok = true )
         ),
+        % Sign status
         ( rdf(R, traffic:requiresSign, Si)
           -> ( sign_matches(Si, S),
                ( present_sign(S) -> Sok = true ; Sok = false )
              )
           ;  ( Si = none, Sok = true )
         ),
+        % Time window status
         ( rdf(R, traffic:appliesDuring, Ti)
           -> ( current_time(M),
                ( time_in_window(M, Ti) -> Tok = true ; Tok = false )
              )
           ;  ( Ti = none, Tok = true )
         ),
+        % Category: generic vs scaffolds
+        ( stop_sign_rule(R)  -> Category = stop_sign
+        ; crosswalk_rule(R)  -> Category = crosswalk
+        ; Category           = generic
+        ),
         format(user_error,
-               "Rule=~w | A=~w (~w) | Z=~w (~w) | S=~w (~w) | T=~w (~w)~n",
-               [R, Airi, Amatch, Zi, Zok, Si, Sok, Ti, Tok])
+               "Rule=~w | Cat=~w | Kind=~w | A=~w (~w) | Z=~w (~w) | S=~w (~w) | T=~w (~w)~n",
+               [R, Category, AKind, Airi, Amatch, Zi, Zok, Si, Sok, Ti, Tok])
       )
     ).
 
@@ -273,4 +365,3 @@ decide(ActionA, illegal, Why) :-
 decide(ActionA, legal,  Why)  :-
     ( dump_rules_for(ActionA) -> true ; true ),
     explain(legal,  _, Why).
-

@@ -79,6 +79,13 @@ stop_sign = TRAFFIC.StopSign
 g.add((stop_sign, RDF.type, TRAFFIC.Sign))
 g.add((stop_sign, RDFS.label, Literal("Stop Sign")))
 
+# Extra comments for explanation / readability
+g.add((crosswalk_zone, RDFS.comment,
+       Literal("Zone representing a pedestrian crosswalk where vehicles may need to yield.")))
+
+g.add((stop_sign, RDFS.comment,
+       Literal("Road sign indicating vehicles must come to a complete stop before proceeding.")))
+
 yield_sign = TRAFFIC.YieldSign
 g.add((yield_sign, RDF.type, TRAFFIC.Sign))
 g.add((yield_sign, RDFS.label, Literal("Yield Sign")))
