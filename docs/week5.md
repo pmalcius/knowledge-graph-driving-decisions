@@ -31,6 +31,6 @@ Hours worked: 9 hours
 - Updated the explanation pipeline so Stop Sign violations now generate rule-specific explanation text, including sign-matching status, inferred action violation, and clause-by-clause reasoning.
 - Extended the debug output to clearly mark when the Stop Sign rule is triggered, making it easier to verify rule firing logic and match the output to expected behavior.
 - Added new scene files (stop_sign_basic.json, stop_sign_scenario.json) to validate Stop Sign behavior under different contexts, confirming that:
-- - movement with a Stop Sign present is classified as ILLEGAL
-- - normal movement without a Stop Sign is correctly LEGAL
+  - movement with a Stop Sign present is classified as ILLEGAL
+  - normal movement without a Stop Sign is correctly LEGAL
 - With Stop Sign enforcement completed, the reasoning engine now supports multiple rule categories (time-window-based, sign-based, and zone-based rules), putting the system in its final shape before the full project write-up begins next week.
