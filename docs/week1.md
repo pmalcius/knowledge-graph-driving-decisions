@@ -4,7 +4,7 @@
 
 ```{text}
 python3 src/extend_ontology.py
-python3 src/rule_check.py
+python3 src/check_rule.py
 ```
 
 To test the resoner
